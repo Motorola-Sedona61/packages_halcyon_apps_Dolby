@@ -313,7 +313,7 @@ class DolbyController private constructor(private val context: Context) {
 
     fun setGeqBandGain(band: Int, gain: Int) {
         if (band in 0..9) {
-            current10BandGains[band] = gain
+            current10BandGains[band] = gain.coerceIn(-15, 15)
             syncGeqToDap()
         }
     }
@@ -337,7 +337,7 @@ class DolbyController private constructor(private val context: Context) {
 
     private fun syncGeqToDap() {
         for (i in 0 until 10) {
-            val scaled = current10BandGains[i] * 10
+            val scaled = current10BandGains[i].coerceIn(-15, 15) * 10
             current20BandGains[2 * i] = scaled
             current20BandGains[2 * i + 1] = scaled
         }

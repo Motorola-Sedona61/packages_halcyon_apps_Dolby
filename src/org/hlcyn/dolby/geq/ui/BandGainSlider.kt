@@ -84,7 +84,7 @@ fun BandGainSlider(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "-10",
+                text = "-15",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -93,7 +93,7 @@ fun BandGainSlider(
                 value = sliderValue,
                 onValueChange = { sliderValue = it },
                 onValueChangeFinished = { onGainChange(sliderValue.roundToInt()) },
-                valueRange = -10f..10f,
+                valueRange = -15f..15f,
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
                     activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -103,7 +103,7 @@ fun BandGainSlider(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "+10",
+                text = "+15",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
