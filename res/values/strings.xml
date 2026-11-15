@@ -36,7 +36,7 @@
     <string name="dolby_control_lost_warning">Dolby Atmos is currently controlled by another audio application</string>
     <string name="dolby_connect_headphones">Connect headphones</string>
     <string name="dolby_reset_profile">Reset to defaults</string>
-    <string name="dolby_reset_profile_toast">Succesfully reset settings for %1$s profile</string>
+    <string name="dolby_reset_profile_toast">Reset settings for %1$s profile</string>
 
     <!-- Dolby profiles -->
     <string name="dolby_profile_dynamic">Dynamic</string>
@@ -67,8 +67,8 @@
     <string name="dolby_geq_delete_preset_prompt">Do you want to delete this preset?</string>
     <string name="dolby_geq_reset_gains">Reset gains</string>
     <string name="dolby_geq_reset_gains_prompt">Do you want to reset this preset to defaults?</string>
-    <string name="dolby_geq_preset_name_exists">Preset name already exists!</string>
-    <string name="dolby_geq_preset_name_too_long">Preset name is too long!</string>
+    <string name="dolby_geq_preset_name_exists">Preset name already exists</string>
+    <string name="dolby_geq_preset_name_too_long">Preset name is too long</string>
 
     <!-- Dolby intelligent EQ -->
     <string name="dolby_ieq">Intelligent equalizer</string>
