@@ -29,6 +29,7 @@ class DolbyAudioEffect(priority: Int, audioSession: Int) : AudioEffect(
                 if (value && (!hasControl() || !enabled)) {
                     checkStatus(setEnabled(true))
                 }
+                setBypass(!value)
                 setIntParam(EFFECT_PARAM_ENABLE, if (value) 1 else 0)
             } catch (e: Exception) {
                 elog(TAG, "Error setting dsOn: ${e.message}", e)
@@ -102,6 +103,20 @@ class DolbyAudioEffect(priority: Int, audioSession: Int) : AudioEffect(
         return byteArrayToInt32Array(buf, length)
     }
 
+    fun setBypass(bypass: Boolean) {
+        dlog(TAG, "setBypass: $bypass")
+        try {
+            val buf = ByteArray(16)
+            int32ToByteArray(4, buf, 0)
+            int32ToByteArray(4, buf, 4)
+            int32ToByteArray(EFFECT_PARAM_SET_BYPASS, buf, 8)
+            int32ToByteArray(if (bypass) 1 else 0, buf, 12)
+            checkStatus(setParameter(EFFECT_PARAM_CPDP_VALUES, buf))
+        } catch (e: Exception) {
+            dlog(TAG, "setBypass failed or unsupported on this HAL: ${e.message}")
+        }
+    }
+
     fun getDapParameterBool(param: DsParam, profile: Int = this.profile): Boolean =
         try {
             getDapParameter(param, profile)[0] == 1
@@ -125,6 +140,7 @@ class DolbyAudioEffect(priority: Int, audioSession: Int) : AudioEffect(
 
         private const val EFFECT_PARAM_ENABLE = 0
         private const val EFFECT_PARAM_CPDP_VALUES = 5
+        private const val EFFECT_PARAM_SET_BYPASS = 18
         private const val EFFECT_PARAM_PROFILE = 0xA000000
         private const val EFFECT_PARAM_SET_PROFILE_PARAMETER = 0x1000000
         private const val EFFECT_PARAM_GET_PROFILE_PARAMETER = 0x1000005

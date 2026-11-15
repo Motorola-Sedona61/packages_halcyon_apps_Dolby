@@ -145,7 +145,17 @@ class DolbyController private constructor(private val context: Context) {
         val currentProfile = preferenceStore.profile
         val baseId = currentBaseProfileId
         dolbyAudioEffect?.profile = baseId
-        dolbyAudioEffect?.dsOn = preferenceStore.dsOn
+
+        if (!preferenceStore.dsOn) {
+            dlog(TAG, "restoreSettings: dsOn is false, enforcing hardware bypass and gating sub-effects")
+            dolbyAudioEffect?.setBypass(true)
+            dolbyAudioEffect?.dsOn = false
+            gateAllSubEffectsOff()
+            return
+        }
+
+        dolbyAudioEffect?.dsOn = true
+        dolbyAudioEffect?.setBypass(false)
 
         val deAmount = preferenceStore.dialogueEnhancerAmount
         dolbyAudioEffect?.setDapParameter(DsParam.IEQ_PRESET, preferenceStore.ieqPreset, baseId)
@@ -158,6 +168,20 @@ class DolbyController private constructor(private val context: Context) {
         dolbyAudioEffect?.setDapParameter(DsParam.SPEAKER_VIRTUALIZER, preferenceStore.speakerVirtEnabled, baseId)
 
         restoreGeqGains()
+    }
+
+    private fun gateAllSubEffectsOff() {
+        val baseId = currentBaseProfileId
+        dolbyAudioEffect?.let { effect ->
+            dlog(TAG, "gateAllSubEffectsOff: clearing all active sub-effects and zeroing GEQ bands")
+            effect.setDapParameter(DsParam.HEADPHONE_VIRTUALIZER, false, baseId)
+            effect.setDapParameter(DsParam.SPEAKER_VIRTUALIZER, false, baseId)
+            effect.setDapParameter(DsParam.VOLUME_LEVELER_ENABLE, false, baseId)
+            effect.setDapParameter(DsParam.DIALOGUE_ENHANCER_ENABLE, false, baseId)
+            effect.setDapParameter(DsParam.BASS_ENHANCER_ENABLE, false, baseId)
+            val flatGains = IntArray(20) { 0 }
+            effect.setDapParameter(DsParam.GEQ_BAND_GAINS, flatGains, baseId)
+        }
     }
 
     private fun updateVirtualizerForRecording(isRecording: Boolean) {
@@ -189,11 +213,14 @@ class DolbyController private constructor(private val context: Context) {
                     reinitEffectAndRestore()
                 } else {
                     dolbyAudioEffect?.dsOn = true
+                    dolbyAudioEffect?.setBypass(false)
                     restoreSettings()
                 }
             } else {
                 checkEffectAndRun {
+                    dolbyAudioEffect?.setBypass(true)
                     dolbyAudioEffect?.dsOn = false
+                    gateAllSubEffectsOff()
                 }
             }
         }
