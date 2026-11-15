@@ -41,6 +41,10 @@ class DolbyConstants {
         const val PREF_SPK_VIRTUALIZER = "dolby_spk_virtualizer"
         const val PREF_RESET = "dolby_reset"
 
+        const val ACTION_SET_DOLBY_STATE = "org.hlcyn.dolby.action.SET_DOLBY_STATE"
+        const val ACTION_TOGGLE_DOLBY = "org.hlcyn.dolby.action.TOGGLE_DOLBY"
+        const val EXTRA_STATE = "state"
+
         val PROFILE_SPECIFIC_PREFS = setOf(
             PREF_PRESET,
             PREF_IEQ,

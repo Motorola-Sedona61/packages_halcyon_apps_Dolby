@@ -15,6 +15,9 @@ import android.media.AudioPlaybackConfiguration
 import android.media.AudioRecordingConfiguration
 import android.os.Handler
 import android.os.Looper
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.hlcyn.dolby.DolbyConstants.Companion.dlog
 import org.hlcyn.dolby.DolbyConstants.Companion.elog
 import org.hlcyn.dolby.DolbyConstants.Companion.wlog
@@ -33,6 +36,12 @@ class DolbyController private constructor(private val context: Context) {
 
     private val current10BandGains = IntArray(10)
     private val current20BandGains = IntArray(20)
+
+    private val _dsOnFlow = MutableStateFlow(preferenceStore.dsOn)
+    val dsOnFlow: StateFlow<Boolean> = _dsOnFlow.asStateFlow()
+
+    private val _hasControlFlow = MutableStateFlow(true)
+    val hasControlFlow: StateFlow<Boolean> = _hasControlFlow.asStateFlow()
 
     val currentBaseProfileId: Int
         get() = profileRepository.getProfile(preferenceStore.profile)?.baseProfileId ?: preferenceStore.profile
@@ -100,14 +109,29 @@ class DolbyController private constructor(private val context: Context) {
             // Ignore release error
         }
         try {
-            dolbyAudioEffect = DolbyAudioEffect(EFFECT_PRIORITY, AUDIO_SESSION_GLOBAL)
-            dlog(TAG, "DolbyAudioEffect initialized successfully")
+            dolbyAudioEffect = DolbyAudioEffect(EFFECT_PRIORITY, AUDIO_SESSION_GLOBAL).apply {
+                onControlStatusChanged = { hasControl ->
+                    dlog(TAG, "AudioEffect control status updated: $hasControl")
+                    _hasControlFlow.value = hasControl
+                    if (hasControl && preferenceStore.dsOn) {
+                        restoreSettings()
+                    }
+                }
+                onEnableStatusChanged = { enabled ->
+                    dlog(TAG, "AudioEffect enable status updated: $enabled")
+                    _dsOnFlow.value = enabled
+                    preferenceStore.dsOn = enabled
+                }
+            }
+            _hasControlFlow.value = dolbyAudioEffect?.hasControl() ?: false
+            dlog(TAG, "DolbyAudioEffect initialized successfully, hasControl=${_hasControlFlow.value}")
             if (restore) {
                 restoreSettings()
             }
         } catch (e: Exception) {
             elog(TAG, "Failed to initialize DolbyAudioEffect: ${e.message}", e)
             dolbyAudioEffect = null
+            _hasControlFlow.value = false
         }
     }
 
@@ -205,9 +229,10 @@ class DolbyController private constructor(private val context: Context) {
     }
 
     var dsOn: Boolean
-        get() = dolbyAudioEffect?.dsOn ?: preferenceStore.dsOn
+        get() = preferenceStore.dsOn
         set(value) {
             preferenceStore.dsOn = value
+            _dsOnFlow.value = value
             if (value) {
                 if (dolbyAudioEffect == null || !dolbyAudioEffect!!.hasControl()) {
                     reinitEffectAndRestore()
@@ -283,6 +308,12 @@ class DolbyController private constructor(private val context: Context) {
                 dolbyAudioEffect?.setDapParameter(DsParam.STEREO_WIDENING_AMOUNT, value, currentBaseProfileId)
             }
         }
+
+    fun toggleDsOn(): Boolean {
+        val newState = !dsOn
+        dsOn = newState
+        return newState
+    }
 
     var volumeLevelerEnabled: Boolean
         get() = preferenceStore.volumeLevelerEnabled

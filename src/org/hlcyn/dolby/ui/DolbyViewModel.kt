@@ -48,6 +48,9 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     private val _dsOn = MutableStateFlow(dolbyController.dsOn)
     val dsOn: StateFlow<Boolean> = _dsOn.asStateFlow()
 
+    private val _hasControl = MutableStateFlow(true)
+    val hasControl: StateFlow<Boolean> = _hasControl.asStateFlow()
+
     private val _profile = MutableStateFlow(dolbyController.profile)
     val profile: StateFlow<Int> = _profile.asStateFlow()
 
@@ -113,6 +116,16 @@ class DolbyViewModel(application: Application) : AndroidViewModel(application) {
     init {
         audioManager.registerAudioDeviceCallback(audioDeviceCallback, null)
         sharedPreferences.registerOnSharedPreferenceChangeListener(prefChangeListener)
+        viewModelScope.launch {
+            dolbyController.hasControlFlow.collect { granted ->
+                _hasControl.value = granted
+            }
+        }
+        viewModelScope.launch {
+            dolbyController.dsOnFlow.collect { enabled ->
+                _dsOn.value = enabled
+            }
+        }
     }
 
     override fun onCleared() {

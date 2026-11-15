@@ -17,6 +17,24 @@ class DolbyAudioEffect(priority: Int, audioSession: Int) : AudioEffect(
     EFFECT_TYPE_NULL, findDapEffectUuid(), priority, audioSession
 ) {
 
+    var onControlStatusChanged: ((Boolean) -> Unit)? = null
+    var onEnableStatusChanged: ((Boolean) -> Unit)? = null
+
+    init {
+        try {
+            setControlStatusListener { _, controlGranted ->
+                dlog(TAG, "Control status changed: $controlGranted")
+                onControlStatusChanged?.invoke(controlGranted)
+            }
+            setEnableStatusListener { _, enabled ->
+                dlog(TAG, "Enable status changed: $enabled")
+                onEnableStatusChanged?.invoke(enabled)
+            }
+        } catch (e: Exception) {
+            dlog(TAG, "Error registering effect listeners: ${e.message}")
+        }
+    }
+
     var dsOn: Boolean
         get() = try {
             getIntParam(EFFECT_PARAM_ENABLE) == 1

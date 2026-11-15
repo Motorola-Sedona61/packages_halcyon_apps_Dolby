@@ -61,6 +61,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.setViewTreeLifecycleOwner
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import androidx.preference.PreferenceManager
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
@@ -75,6 +81,7 @@ import com.android.settingslib.spa.widget.preference.SwitchPreferenceModel
 class DolbyTileService : TileService() {
 
     private val dolbyController by lazy { DolbyController.getInstance(applicationContext) }
+    private var tileScope: CoroutineScope? = null
 
     private val prefChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
         updateTileState()
@@ -84,11 +91,21 @@ class DolbyTileService : TileService() {
         super.onStartListening()
         PreferenceManager.getDefaultSharedPreferences(this)
             .registerOnSharedPreferenceChangeListener(prefChangeListener)
+        tileScope?.cancel()
+        tileScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).also { scope ->
+            scope.launch {
+                dolbyController.dsOnFlow.collect {
+                    updateTileState()
+                }
+            }
+        }
         updateTileState()
     }
 
     override fun onStopListening() {
         super.onStopListening()
+        tileScope?.cancel()
+        tileScope = null
         PreferenceManager.getDefaultSharedPreferences(this)
             .unregisterOnSharedPreferenceChangeListener(prefChangeListener)
     }

@@ -29,6 +29,8 @@
             android:exported="true">
             <intent-filter android:priority="1000">
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="org.hlcyn.dolby.action.SET_DOLBY_STATE" />
+                <action android:name="org.hlcyn.dolby.action.TOGGLE_DOLBY" />
             </intent-filter>
         </receiver>
 
